@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# env/local
+.env
+.env.*
+
+# logs
+*.log
+
+# temp/build
+tmp/
+dist/
+bin/
+coverage.out
+
+# Go
+*.test
+*.prof
+
+# IDE
+.vscode/
+.idea/
+
+# docker overrides
+docker-compose.override.yml
