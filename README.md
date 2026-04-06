@@ -9,15 +9,7 @@ simple and fast html -> markdown reader service in go.
 - `GET /read?url=https://example.com`
 - `POST /extract`
 
-## run
-
-```bash
-go run ./cmd/server
-```
-
-server starts at `:8080`.
-
-## docker compose
+## getting started
 
 ```bash
 docker compose up --build
@@ -26,6 +18,19 @@ docker compose up --build
 this starts:
 
 - `go-reader` on `:8080`
+
+## optional api key auth
+
+set `API_KEY` to require an `X-API-KEY` header on `GET /read` and `POST /extract`.
+
+- when `API_KEY` is not set, auth is disabled
+- `GET /healthz` and `GET /readyz` are always publicx
+
+example:
+
+```bash
+API_KEY=supersecret docker compose up --build
+```
 
 ## extract request
 
@@ -68,4 +73,3 @@ curl -X POST "http://localhost:8080/extract" \
 curl "http://localhost:8080/read?url=https://example.com" \
   -H "X-User-Agent: my-reader/1.0"
 ```
-
