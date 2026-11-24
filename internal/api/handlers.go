@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -100,6 +101,11 @@ func (h *Handlers) process(parent context.Context, urlValue string, timeoutMS in
 		res.ElapsedMS = time.Since(started).Milliseconds()
 		if res.Error.Code == "ERR_TIMEOUT" {
 			return res, http.StatusGatewayTimeout
+		}
+		var upstream *fetch.UpstreamStatusError
+		if errors.As(err, &upstream) && upstream.StatusCode >= 400 && upstream.StatusCode < 500 {
+			res.StatusCode = upstream.StatusCode
+			return res, upstream.StatusCode
 		}
 		return res, http.StatusBadGateway
 	}

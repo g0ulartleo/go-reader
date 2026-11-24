@@ -17,6 +17,14 @@ type Client struct {
 	http *http.Client
 }
 
+type UpstreamStatusError struct {
+	StatusCode int
+}
+
+func (e *UpstreamStatusError) Error() string {
+	return fmt.Sprintf("upstream status %d", e.StatusCode)
+}
+
 type Result struct {
 	Body        string
 	FinalURL    string
@@ -80,7 +88,7 @@ func (c *Client) Get(ctx context.Context, rawURL string, userAgent string) (Resu
 				FinalURL:    resp.Request.URL.String(),
 				StatusCode:  resp.StatusCode,
 				ContentType: resp.Header.Get("Content-Type"),
-			}, fmt.Errorf("upstream status %d", resp.StatusCode)
+			}, &UpstreamStatusError{StatusCode: resp.StatusCode}
 		}
 
 		return Result{
