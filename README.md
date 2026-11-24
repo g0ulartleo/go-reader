@@ -9,6 +9,8 @@ simple and fast html -> markdown reader service in go.
 - `GET /read?url=https://example.com`
 - `POST /extract`
 
+when the target site answers 403, 404, 410 or 451, `/read` and `/extract` return that same status. other upstream failures return 502, and timeouts return 504.
+
 ## getting started
 
 ```bash

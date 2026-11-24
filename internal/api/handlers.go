@@ -15,6 +15,13 @@ import (
 	"go-reader/internal/validate"
 )
 
+var passThroughStatuses = map[int]bool{
+	http.StatusForbidden:                  true,
+	http.StatusNotFound:                   true,
+	http.StatusGone:                       true,
+	http.StatusUnavailableForLegalReasons: true,
+}
+
 type Handlers struct {
 	fetcher   *fetch.Client
 	converter *convert.Converter
@@ -99,12 +106,12 @@ func (h *Handlers) process(parent context.Context, urlValue string, timeoutMS in
 	if err != nil {
 		res.Error = mapFetchError(err)
 		res.ElapsedMS = time.Since(started).Milliseconds()
+		res.StatusCode = fetchResult.StatusCode
 		if res.Error.Code == "ERR_TIMEOUT" {
 			return res, http.StatusGatewayTimeout
 		}
 		var upstream *fetch.UpstreamStatusError
-		if errors.As(err, &upstream) && upstream.StatusCode >= 400 && upstream.StatusCode < 500 {
-			res.StatusCode = upstream.StatusCode
+		if errors.As(err, &upstream) && passThroughStatuses[upstream.StatusCode] {
 			return res, upstream.StatusCode
 		}
 		return res, http.StatusBadGateway
@@ -152,10 +159,11 @@ func mapFetchError(err error) *APIError {
 	if fetch.IsTimeout(err) {
 		return &APIError{Code: "ERR_TIMEOUT", Message: "upstream request timed out"}
 	}
-	msg := err.Error()
-	if strings.Contains(msg, "upstream status") {
-		return &APIError{Code: "ERR_UPSTREAM_STATUS", Message: msg}
+	var upstream *fetch.UpstreamStatusError
+	if errors.As(err, &upstream) {
+		return &APIError{Code: "ERR_UPSTREAM_STATUS", Message: upstream.Error()}
 	}
+	msg := err.Error()
 	if strings.Contains(msg, "bad url") {
 		return &APIError{Code: "ERR_BAD_URL", Message: "invalid target url"}
 	}
